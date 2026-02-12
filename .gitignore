@@ -1,0 +1,51 @@
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# VS Code
+.vscode/
+
+# Build artifacts
+*.o
+*.elf
+*.hex
+*.bin
+*.map
+
+# OS junk
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Backup files
+*~
+*.bak
+*.swp
+*.swo
+
+# IDE
+*.sublime-project
+*.sublime-workspace
+.idea/
+
+# Compiled Object files
+*.slo
+*.lo
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects
+*.dll
+*.so
+*.so.*
+*.dylib
