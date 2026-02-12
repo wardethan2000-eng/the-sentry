@@ -11,7 +11,7 @@
 #ifndef TILT_CONTROLLER_H
 #define TILT_CONTROLLER_H
 
-#include <Servo.h>
+#include <ESP32Servo.h>
 #include <stdint.h>
 
 class TiltController {

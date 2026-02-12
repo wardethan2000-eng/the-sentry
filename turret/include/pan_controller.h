@@ -12,7 +12,7 @@
 #ifndef PAN_CONTROLLER_H
 #define PAN_CONTROLLER_H
 
-#include <Servo.h>
+#include <ESP32Servo.h>
 #include <stdint.h>
 
 class PanController {

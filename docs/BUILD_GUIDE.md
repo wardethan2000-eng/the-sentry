@@ -113,30 +113,34 @@ See [PROGRAMMING.md](PROGRAMMING.md) § "Verifying the Beacon Output".
 ```
 5V 4A Adapter ──→ DC barrel pigtail ──→ Breadboard (+) and (−) rails
 
-(+) rail ──→ Arduino Nano 5V pin
+(+) rail ──→ ESP32 5V (VIN) pin
 (+) rail ──→ Pan servo VCC (red)
 (+) rail ──→ Tilt servo VCC (red)
 (+) rail ──→ All 4× TSOP38238 VCC
 
-(−) rail ──→ Arduino Nano GND
+(−) rail ──→ ESP32 GND
 (−) rail ──→ Pan servo GND (brown/black)
 (−) rail ──→ Tilt servo GND (brown/black)
 (−) rail ──→ All 4× TSOP38238 GND
 ```
 
 > **WARNING**: Do NOT power the servos from the Arduino's 5V pin or USB port.
-> The MG996R can draw up to 2 A under stall — this will destroy the Nano's
+> The MG996R can draw up to 2 A under stall — this will destroy the ESP32's
 > voltage regulator. Always use the 5 V 4 A adapter on a shared bus.
 
 ### Signal Wiring
 | Wire | From | To |
 |------|------|----|
-| Pan servo signal (orange/white) | Servo | Arduino D9 |
-| Tilt servo signal (orange/white) | Servo | Arduino D10 |
-| Sensor Top OUT | TSOP38238 | Arduino D2 |
-| Sensor Bottom OUT | TSOP38238 | Arduino D3 |
-| Sensor Left OUT | TSOP38238 | Arduino D4 |
-| Sensor Right OUT | TSOP38238 | Arduino D5 |
+| Pan servo signal (orange/white) | Servo | ESP32 GPIO 18 |
+| Tilt servo signal (orange/white) | Servo | ESP32 GPIO 19 |
+| Sensor Top OUT | TSOP38238 | ESP32 GPIO 16 |
+| Sensor Bottom OUT | TSOP38238 | ESP32 GPIO 17 |
+| Sensor Left OUT | TSOP38238 | ESP32 GPIO 25 |
+| Sensor Right OUT | TSOP38238 | ESP32 GPIO 26 |
+
+> **Note:** The ESP32 is a 3.3 V microcontroller. The TSOP38238 runs fine at
+> 3.3 V (rated 2.5–5.5 V). MG996R servos expect 5 V signal; most work
+> reliably with 3.3 V logic, but add a level shifter if you get jitter.
 
 ### Cable Management (Issue #4 + Issue #7)
 - Route all cables (sensor wires, servo wires, fan AC cord) through the **center hole of the lazy susan**.

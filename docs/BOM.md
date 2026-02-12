@@ -30,7 +30,7 @@ Range will be reduced to ~3 m.  Consider adding a third LED to compensate.
 | # | Component | Qty | Specification | Est. Cost | Notes |
 |---|-----------|-----|---------------|-----------|-------|
 | 1 | Fan Unit | 1 | Honeywell HT-900 | ~$15.00 | Donor fan; AC powered (120 V), manual speed control retained |
-| 2 | Controller | 1 | Arduino Nano (ATmega328P) | ~$6.00 | Processes sensors, drives servos, serial debug |
+| 2 | Controller | 1 | ESP32 DevKit v1 | ~$6.00 | Processes sensors, drives servos, serial debug; WiFi/BLE for future expansion |
 | 3 | IR Sensors | 4 | TSOP38238 (38 kHz) | ~$2.00 | Must match beacon carrier frequency |
 | 4 | Pan Servo | 1 | MG996R (continuous 360°) | ~$9.00 | Continuous rotation; drives ring gear via pinion |
 | 5 | Tilt Servo | 1 | MG996R (standard 180°) | ~$9.00 | Standard positional; 0–45° range |

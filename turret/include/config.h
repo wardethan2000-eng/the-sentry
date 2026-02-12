@@ -19,29 +19,33 @@
 #include <stdint.h>
 
 // ===================================================================
-// Pin Assignments
+// Pin Assignments  (ESP32 DevKit v1)
+//
+// Avoid: GPIO 0, 2, 5, 12, 15 (boot strapping)
+//        GPIO 6–11  (internal flash SPI)
+//        GPIO 34–39 (input-only, no pull-up)
 // ===================================================================
 
 /** @brief Pan servo signal (continuous rotation MG996R). PWM capable. */
-constexpr uint8_t PIN_PAN_SERVO  = 9;
+constexpr uint8_t PIN_PAN_SERVO  = 18;
 
 /** @brief Tilt servo signal (standard 180° MG996R). PWM capable. */
-constexpr uint8_t PIN_TILT_SERVO = 10;
+constexpr uint8_t PIN_TILT_SERVO = 19;
 
 /** @brief TSOP38238 sensor — Top (upper quadrant). LOW = signal detected. */
-constexpr uint8_t PIN_SENSOR_TOP    = 2;
+constexpr uint8_t PIN_SENSOR_TOP    = 16;
 
 /** @brief TSOP38238 sensor — Bottom (lower quadrant). */
-constexpr uint8_t PIN_SENSOR_BOTTOM = 3;
+constexpr uint8_t PIN_SENSOR_BOTTOM = 17;
 
 /** @brief TSOP38238 sensor — Left. */
-constexpr uint8_t PIN_SENSOR_LEFT   = 4;
+constexpr uint8_t PIN_SENSOR_LEFT   = 25;
 
 /** @brief TSOP38238 sensor — Right. */
-constexpr uint8_t PIN_SENSOR_RIGHT  = 5;
+constexpr uint8_t PIN_SENSOR_RIGHT  = 26;
 
-/** @brief Built-in LED for status indication (Nano pin 13). */
-constexpr uint8_t PIN_STATUS_LED    = 13;
+/** @brief Built-in LED for status indication (ESP32 DevKit onboard LED). */
+constexpr uint8_t PIN_STATUS_LED    = 2;
 
 // ===================================================================
 // Sensor Filtering  (Issue #6)

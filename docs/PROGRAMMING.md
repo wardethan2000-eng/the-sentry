@@ -10,7 +10,7 @@ How to set up PlatformIO and flash both subsystems.
 2. **ISP Programmer** for the ATtiny85 beacon (one of):
    - **USBasp** — a cheap dedicated AVR programmer (~$3). Recommended.
    - **Arduino-as-ISP** — use a spare Arduino Uno/Nano running the ArduinoISP sketch.
-3. **USB cable** for the Arduino Nano turret (Mini-B or USB-C depending on board revision).
+3. **USB cable** for the ESP32 DevKit turret (Micro-USB or USB-C depending on board revision).
 
 ---
 
@@ -80,9 +80,9 @@ This writes LFUSE=0xE2, HFUSE=0xDF, EFUSE=0xFF (8 MHz internal, BOD disabled).
 
 ---
 
-## 2. Flashing the Turret (Arduino Nano)
+## 2. Flashing the Turret (ESP32)
 
-Connect the Nano via USB and run:
+Connect the ESP32 via USB and run:
 
 ```bash
 cd turret
@@ -134,4 +134,5 @@ Before assembling the full system, verify the beacon works in isolation:
 | `avrdude: Device signature = 0x000000` | Wiring error or no power | Check all ISP connections, ensure VCC is present |
 | Beacon LEDs don't light | Wrong pin, dead LED, or transistor wired backwards | Test LED with a coin cell + resistor directly; verify 2N2222 pinout (EBC) |
 | No serial output from turret | Wrong baud rate or COM port | Verify `monitor_speed = 115200` in platformio.ini; check Device Manager for port |
+| ESP32 won't flash | Boot mode not entered | Hold BOOT button while clicking EN/RST, then release; some DevKit boards need this |
 | Servo jitters at startup | Power supply inadequate | Use the 5 V 4 A adapter, not USB power |

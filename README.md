@@ -14,7 +14,7 @@ airflow aimed at the user.
 ```
 the-sentry/
 ├── beacon/          ATtiny85 wearable IR beacon (the Clip)
-├── turret/          Arduino Nano motorized fan base (the Turret)
+├── turret/          ESP32 motorized fan base (the Turret)
 └── docs/            Build guide, BOM, programming instructions
 ```
 
@@ -27,7 +27,7 @@ the-sentry/
 - **Runtime:** ~6.5 hours with aggressive duty cycling
 
 ### Turret (Fan Base)
-- **MCU:** Arduino Nano (ATmega328P)
+- **MCU:** ESP32 DevKit v1 (development) / Arduino Nano (production)
 - **Sensors:** 4× TSOP38238 (38 kHz demodulating IR receivers)
 - **Pan:** MG996R continuous-rotation servo with ring-gear / lazy-susan drivetrain
 - **Tilt:** MG996R standard 180° servo coupled to the fan head pivot
