@@ -1,6 +1,13 @@
 /**
  * @file signal_monitor.cpp
  * @brief Signal-loss state machine implementation.
+ *
+ * Fixes applied:
+ *   - SIGNAL_PRESENT_HOLDOFF_MS is now enforced: the state machine stays
+ *     in TRACKING for at least this long after the last detection before
+ *     beginning the transition toward SEARCHING.
+ *   - Previous-state tracking enables the main loop to detect transitions
+ *     and run one-time entry actions (sweep reset, position re-zero, etc.).
  */
 
 #include "signal_monitor.h"
@@ -13,6 +20,7 @@
 
 void SignalMonitor::init() {
     state_        = MonitorState::TRACKING;
+    prevState_    = MonitorState::TRACKING;
     lastSignalMs_ = millis();
     lastBlinkMs_  = millis();
     ledState_     = false;
@@ -23,6 +31,9 @@ void SignalMonitor::init() {
 
 void SignalMonitor::update(bool anySignalDetected) {
     unsigned long now = millis();
+
+    // Snapshot current state so the main loop can detect transitions.
+    prevState_ = state_;
 
     if (anySignalDetected) {
         lastSignalMs_ = now;
@@ -35,16 +46,33 @@ void SignalMonitor::update(bool anySignalDetected) {
     // No signal — compute time since last detection.
     unsigned long elapsed = now - lastSignalMs_;
 
+    // Holdoff: stay in TRACKING if within the hysteresis window.
+    // This prevents brief dropouts from starting the loss timer.
+    if (elapsed < SIGNAL_PRESENT_HOLDOFF_MS) {
+        // Remain in current state (TRACKING).
+        return;
+    }
+
+    // Beyond holdoff — evaluate loss thresholds.
     if (elapsed >= SIGNAL_LOSS_PARK_MS) {
         state_ = MonitorState::PARKED;
     } else if (elapsed >= SIGNAL_LOSS_SEARCH_MS) {
         state_ = MonitorState::SEARCHING;
     }
-    // else: still within holdoff window, stay in current state (TRACKING).
+    // else: past holdoff but before search threshold — stay in TRACKING
+    // (signal just recently lost, not long enough to start searching).
 }
 
 MonitorState SignalMonitor::getState() const {
     return state_;
+}
+
+MonitorState SignalMonitor::getPreviousState() const {
+    return prevState_;
+}
+
+bool SignalMonitor::stateChanged() const {
+    return state_ != prevState_;
 }
 
 void SignalMonitor::updateStatusLED() {
