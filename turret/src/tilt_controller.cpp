@@ -1,6 +1,9 @@
 /**
  * @file tilt_controller.cpp
  * @brief Standard servo tilt control with range clamping and rate limiting.
+ *
+ * Fix: currentAngle_ is int16_t throughout, eliminating signed/unsigned
+ *      edge cases when nudging near the lower bound.
  */
 
 #include "tilt_controller.h"
@@ -18,13 +21,13 @@ void TiltController::init() {
     lastStepMs_ = millis();
 }
 
-void TiltController::setAngle(uint8_t degrees) {
+void TiltController::setAngle(int16_t degrees) {
     // Clamp to allowed range.
-    if (degrees < TILT_MIN_DEG) degrees = TILT_MIN_DEG;
-    if (degrees > TILT_MAX_DEG) degrees = TILT_MAX_DEG;
+    if (degrees < static_cast<int16_t>(TILT_MIN_DEG)) degrees = TILT_MIN_DEG;
+    if (degrees > static_cast<int16_t>(TILT_MAX_DEG)) degrees = TILT_MAX_DEG;
 
     currentAngle_ = degrees;
-    servo_.write(currentAngle_);
+    servo_.write(static_cast<int>(currentAngle_));
 }
 
 bool TiltController::nudge(int8_t delta) {
@@ -40,17 +43,17 @@ bool TiltController::nudge(int8_t delta) {
     if (delta < -static_cast<int8_t>(TILT_STEP_DEG)) delta = -static_cast<int8_t>(TILT_STEP_DEG);
 
     // Compute new angle with bounds check.
-    int16_t newAngle = static_cast<int16_t>(currentAngle_) + delta;
-    if (newAngle < TILT_MIN_DEG) newAngle = TILT_MIN_DEG;
-    if (newAngle > TILT_MAX_DEG) newAngle = TILT_MAX_DEG;
+    int16_t newAngle = currentAngle_ + delta;
+    if (newAngle < static_cast<int16_t>(TILT_MIN_DEG)) newAngle = TILT_MIN_DEG;
+    if (newAngle > static_cast<int16_t>(TILT_MAX_DEG)) newAngle = TILT_MAX_DEG;
 
-    currentAngle_ = static_cast<uint8_t>(newAngle);
-    servo_.write(currentAngle_);
+    currentAngle_ = newAngle;
+    servo_.write(static_cast<int>(currentAngle_));
     lastStepMs_ = now;
     return true;
 }
 
-uint8_t TiltController::getAngle() const {
+int16_t TiltController::getAngle() const {
     return currentAngle_;
 }
 
