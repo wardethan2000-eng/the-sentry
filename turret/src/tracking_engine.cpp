@@ -3,10 +3,18 @@
  * @brief Proportional tracking algorithm with dead band and speed ramping.
  *
  * This is the core of The Sentry's tracking behaviour (Issue #8 resolution).
+ *
+ * Fix: The pan speed heuristic now uses a time-based memory of when the
+ * opposing horizontal sensor was last active.  If the other side fired
+ * recently (within APPROACH_MEMORY_MS), the beacon must be near center,
+ * so we slow down for smooth convergence.  This replaces the previous
+ * approach of checking vertical sensors, which was unreliable when the
+ * beacon was at a different height than the sensor cross.
  */
 
 #include "tracking_engine.h"
 #include "config.h"
+#include <Arduino.h>
 
 // ===================================================================
 // Public API
@@ -15,6 +23,8 @@
 void TrackingEngine::init(PanController *pan, TiltController *tilt) {
     pan_  = pan;
     tilt_ = tilt;
+    lastLeftActiveMs_  = 0;
+    lastRightActiveMs_ = 0;
 }
 
 void TrackingEngine::update(const SensorReading &reading) {
@@ -40,27 +50,33 @@ void TrackingEngine::halt() {
 // Private helpers
 // ===================================================================
 
-float TrackingEngine::computePanSpeed(const SensorReading &reading) const {
+float TrackingEngine::computePanSpeed(const SensorReading &reading) {
+    unsigned long now = millis();
+
     bool left  = (reading.left  == SensorState::ACTIVE);
     bool right = (reading.right == SensorState::ACTIVE);
+
+    // Track when each horizontal sensor was last active.
+    if (left)  lastLeftActiveMs_  = now;
+    if (right) lastRightActiveMs_ = now;
 
     // Dead band: both active (centered) or neither active (no info) → hold.
     if (left == right) {
         return 0.0f;
     }
 
-    // Determine direction and speed.
-    // "Far off-center" = only one side active.  We don't have a partial-
-    // detection metric from the majority-vote filter directly, so we use
-    // a simple heuristic: check if the vertical sensors are also active.
-    // If the beacon is close to center, at least one vertical sensor is
-    // likely active alongside the horizontal one, suggesting we're nearly
-    // aligned.  This is a rough proxy for "almost centered → slow down".
+    // Determine if the opposing sensor was recently active.
+    // If so, the beacon is near center → use slow speed for smooth approach.
+    bool nearCenter = false;
+    if (left) {
+        // Beacon is to the left; was the RIGHT sensor active recently?
+        nearCenter = (now - lastRightActiveMs_) < APPROACH_MEMORY_MS;
+    } else {
+        // Beacon is to the right; was the LEFT sensor active recently?
+        nearCenter = (now - lastLeftActiveMs_) < APPROACH_MEMORY_MS;
+    }
 
-    bool anyVertical = (reading.top  == SensorState::ACTIVE) ||
-                       (reading.bottom == SensorState::ACTIVE);
-
-    float speed = anyVertical ? TRACK_PAN_SPEED_SLOW : TRACK_PAN_SPEED_FAST;
+    float speed = nearCenter ? TRACK_PAN_SPEED_SLOW : TRACK_PAN_SPEED_FAST;
 
     // Convention: negative = left (CCW), positive = right (CW).
     if (left) {
