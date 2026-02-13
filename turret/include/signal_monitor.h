@@ -50,6 +50,21 @@ public:
     MonitorState getState() const;
 
     /**
+     * @brief Return the state that was active *before* the most recent
+     *        call to update().
+     *
+     * Compare getState() != getPreviousState() to detect transitions.
+     */
+    MonitorState getPreviousState() const;
+
+    /**
+     * @brief True if the most recent update() caused a state change.
+     *
+     * Convenience wrapper: getState() != getPreviousState().
+     */
+    bool stateChanged() const;
+
+    /**
      * @brief Drive the status LED according to the current state.
      *
      * Call once per main-loop iteration (handles blink timing internally).
@@ -57,7 +72,8 @@ public:
     void updateStatusLED();
 
 private:
-    MonitorState state_ = MonitorState::TRACKING;
+    MonitorState state_     = MonitorState::TRACKING;
+    MonitorState prevState_ = MonitorState::TRACKING;
     unsigned long lastSignalMs_  = 0;   ///< millis() of last detection
     unsigned long lastBlinkMs_   = 0;   ///< LED blink timer
     bool ledState_ = false;
