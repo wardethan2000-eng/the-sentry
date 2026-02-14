@@ -16,12 +16,21 @@ All values reflect resolved issues (corrected resistors, upgraded LEDs, etc.).
 | 6 | Base Resistor | 1 | 1 kΩ ¼W | <$0.10 | Limits base current to transistor |
 | 7 | IC Socket | 1 | 8-pin DIP socket | ~$0.50 | Protects chip during soldering |
 | 8 | Battery Holder | 1 | CR2032 PCB mount | ~$1.00 | Structural backbone of the clip |
+| 9 | Bypass Capacitor | 1 | 100 nF ceramic (0805 or through-hole) | <$0.10 | **Required.** Place between VCC and GND, close to ATtiny85 pin 4/8. Prevents brownout during 200 mA pulsed loads. |
 
-**Beacon subtotal: ~$14.40**
+**Beacon subtotal: ~$14.50**
 
 ### Fallback (if TSAL6200 unavailable)
 Use standard 3 mm 940 nm IR LEDs with **120 Ω** resistors (20 mA continuous).
 Range will be reduced to ~3 m.  Consider adding a third LED to compensate.
+
+### Current Capability Note
+The LIR2032 has limited pulse-current capability (typically 50–100 mA depending
+on manufacturer).  Two LEDs at 100 mA each (200 mA total) will cause significant
+voltage sag, reducing actual LED current below the calculated value.  This is
+acceptable — the TSAL6200's high radiant intensity still provides adequate range.
+If you need maximum range, consider a CR123A or AAA battery holder instead
+(higher capacity and lower internal resistance).
 
 ---
 
@@ -32,13 +41,15 @@ Range will be reduced to ~3 m.  Consider adding a third LED to compensate.
 | 1 | Fan Unit | 1 | Honeywell HT-900 | ~$15.00 | Donor fan; AC powered (120 V), manual speed control retained |
 | 2 | Controller | 1 | ESP32 DevKit v1 | ~$6.00 | Processes sensors, drives servos, serial debug; WiFi/BLE for future expansion |
 | 3 | IR Sensors | 4 | TSOP38238 (38 kHz) | ~$2.00 | Must match beacon carrier frequency |
-| 4 | Pan Servo | 1 | MG996R (continuous 360°) | ~$9.00 | Continuous rotation; drives ring gear via pinion |
-| 5 | Tilt Servo | 1 | MG996R (standard 180°) | ~$9.00 | Standard positional; 0–45° range |
-| 6 | Bearing | 1 | 4-inch lazy susan (metal) | ~$5.00 | Ball-bearing turntable; isolates fan weight from servo |
-| 7 | Power Supply | 1 | 5 V 4 A DC adapter | ~$12.00 | Barrel jack; **do NOT use phone chargers** |
-| 8 | DC Connector | 1 | Female DC barrel pigtail | ~$1.00 | Barrel jack to bare-wire for breadboard |
+| 4 | Sensor Bypass Caps | 4 | 100 nF ceramic | <$0.20 | **Required.** One per TSOP38238, across VCC–GND close to each sensor. Per datasheet recommendation. |
+| 5 | Pan Servo | 1 | MG996R (continuous 360°) | ~$9.00 | Continuous rotation; drives ring gear via pinion |
+| 6 | Tilt Servo | 1 | MG996R (standard 180°) | ~$9.00 | Standard positional; 0–45° range |
+| 7 | Bearing | 1 | 4-inch lazy susan (metal) | ~$5.00 | Ball-bearing turntable; isolates fan weight from servo |
+| 8 | Power Supply | 1 | 5 V 4 A DC adapter | ~$12.00 | Barrel jack; **do NOT use phone chargers** |
+| 9 | DC Connector | 1 | Female DC barrel pigtail | ~$1.00 | Barrel jack to bare-wire for breadboard |
+| 10 | Level Shifter (recommended) | 1 | 3.3 V ↔ 5 V bi-directional (2-ch) | ~$1.00 | For pan + tilt servo signal lines. ESP32 GPIO is 3.3 V; MG996R expects 5 V signal. Most servos tolerate 3.3 V, but a level shifter eliminates jitter risk. |
 
-**Turret subtotal: ~$59.00**
+**Turret subtotal: ~$60.20**
 
 ---
 
@@ -60,8 +71,8 @@ Range will be reduced to ~3 m.  Consider adding a third LED to compensate.
 
 | Subsystem | Cost |
 |-----------|------|
-| Beacon | ~$14.40 |
-| Turret | ~$59.00 |
-| **Total** | **~$73–$85** |
+| Beacon | ~$14.50 |
+| Turret | ~$60.20 |
+| **Total** | **~$75–$85** |
 
 *Excludes filament, fasteners, wire, solder, and ISP programmer.*
