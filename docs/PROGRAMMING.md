@@ -105,7 +105,22 @@ pio device monitor --baud 115200
 
 ---
 
-## 3. Verifying the Beacon Output
+## 3. Running Unit Tests
+
+The turret includes host-side (native platform) unit tests for the tracking logic
+and signal monitor state machine. These run on your PC without hardware:
+
+```bash
+cd turret
+pio test -e native
+```
+
+Tests verify dead-band logic, signal-loss transitions, holdoff hysteresis,
+saturation handling, and state-change detection.
+
+---
+
+## 4. Verifying the Beacon Output
 
 Before assembling the full system, verify the beacon works in isolation:
 
@@ -126,7 +141,7 @@ Before assembling the full system, verify the beacon works in isolation:
 
 ---
 
-## 4. Troubleshooting
+## 5. Troubleshooting
 
 | Problem | Cause | Fix |
 |---------|-------|-----|
