@@ -64,3 +64,4 @@ void TiltController::parkHome() {
 void TiltController::goScanPosition() {
     setAngle(TILT_SCAN_DEG);
 }
+
