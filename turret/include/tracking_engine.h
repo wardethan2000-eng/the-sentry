@@ -10,8 +10,9 @@
  *   - Only RIGHT active → pan right at TRACK_PAN_SPEED_FAST
  *   - Both LEFT & RIGHT → centered, hold (dead band)
  *   - Neither           → hold (no information)
- *   - If the "off" sensor is intermittently hitting (partial detection),
- *     reduce speed to TRACK_PAN_SPEED_SLOW for smooth approach.
+ *   - If the opposing sensor was recently active (within the last
+ *     APPROACH_MEMORY_MS), reduce speed to TRACK_PAN_SPEED_SLOW for
+ *     smooth convergence — the beacon is near center.
  *
  * Tilt (vertical):
  *   - Only TOP active    → nudge up (+TILT_STEP_DEG)
@@ -50,16 +51,29 @@ public:
     /** @brief Stop both axes (servos hold / stop). */
     void halt();
 
+    /**
+     * @brief Time window (ms) for "recently active" detection on the
+     *        opposing horizontal sensor.  If the other side was active
+     *        within this window, the beacon is near center → slow down.
+     */
+    static constexpr uint16_t APPROACH_MEMORY_MS = 400;
+
 private:
     PanController  *pan_  = nullptr;
     TiltController *tilt_ = nullptr;
 
+    unsigned long lastLeftActiveMs_  = 0;   ///< millis() when LEFT was last active
+    unsigned long lastRightActiveMs_ = 0;   ///< millis() when RIGHT was last active
+
     /**
      * @brief Determine proportional pan speed from horizontal sensor pair.
      *
+     * Uses recent-activity memory on the opposing sensor to detect when
+     * the beacon is near center and slow down for smooth approach.
+     *
      * @return Signed normalised speed (−1.0 … +1.0), 0 = hold.
      */
-    float computePanSpeed(const SensorReading &reading) const;
+    float computePanSpeed(const SensorReading &reading);
 
     /**
      * @brief Determine tilt nudge direction from vertical sensor pair.
