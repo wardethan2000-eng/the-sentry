@@ -22,25 +22,40 @@ Complete each phase and verify before moving to the next.
 
 ### Assembly
 1. Solder the 8-pin DIP socket onto a small piece of perfboard or directly into the CR2032 battery holder PCB.
-2. Solder the 2N2222A transistor:
+2. **Add a 100 nF ceramic bypass capacitor** between socket pin 8 (VCC) and pin 4 (GND), as close to the IC socket as possible. This is critical — the 200 mA pulsed load will cause voltage sag on the coin cell without it, potentially causing brownout resets.
+3. Solder the 2N2222A transistor:
    - **Emitter** → GND rail
-   - **Collector** → anode of both TSAL6200 LEDs (through individual 22 Ω resistors)
    - **Base** → 1 kΩ resistor → socket pin 5 (PB0)
-3. Wire both LED cathodes to Collector-side of the resistors. Each LED has its own 22 Ω resistor in series, then they share the collector.
-4. Connect battery holder: **+** → socket pin 8 (VCC), **−** → socket pin 4 (GND).
-5. Insert the programmed ATtiny85 into the socket (notch/dot toward pin 1).
+   - **Collector** → LED cathodes (see schematic below)
+4. Wire both TSAL6200 LEDs in a low-side-switched configuration:
+   - Each LED **anode** connects through its own **22 Ω resistor** to VCC.
+   - Each LED **cathode** connects to the **transistor collector**.
+   - When the transistor turns on, current flows: VCC → resistor → LED → transistor → GND.
+5. Connect battery holder: **+** → socket pin 8 (VCC), **−** → socket pin 4 (GND).
+6. Insert the programmed ATtiny85 into the socket (notch/dot toward pin 1).
 
 ### Schematic (text)
 ```
-LIR2032 (+) ─── VCC (pin 8)
-LIR2032 (−) ─── GND (pin 4) ─── 2N2222 Emitter
+                    VCC (pin 8) ──── LIR2032 (+)
+                        │
+                   100nF cap
+                        │
+                    GND (pin 4) ──── LIR2032 (−)
+                        │
+                   2N2222 Emitter
 
-PB0 (pin 5) ─── 1kΩ ─── 2N2222 Base
 
-2N2222 Collector ─┬── 22Ω ── TSAL6200 (A) anode → cathode → VCC
-                  └── 22Ω ── TSAL6200 (B) anode → cathode → VCC
+             VCC ──┬── 22Ω ── TSAL6200 (A) anode → cathode ──┬── 2N2222 Collector
+                   │                                          │
+                   └── 22Ω ── TSAL6200 (B) anode → cathode ──┘
+                                                              │
+PB0 (pin 5) ─── 1kΩ ─── 2N2222 Base            2N2222 Emitter ── GND
 ```
-*Note: LEDs are wired "high-side" with anodes toward VCC and cathodes pulled low through the transistor. Alternatively, wire low-side (cathodes to collector, anodes through resistors to VCC) — either works.*
+
+**Current path (when transistor ON):**
+VCC → 22 Ω resistor → LED anode → LED cathode → Collector → Emitter → GND
+
+> **Important:** The 2N2222A pinout (TO-92, flat side facing you) is **E-B-C** (left to right). Double-check with your specific part's datasheet, as some manufacturers use different packages.
 
 ### Test
 See [PROGRAMMING.md](PROGRAMMING.md) § "Verifying the Beacon Output".
@@ -93,6 +108,7 @@ See [PROGRAMMING.md](PROGRAMMING.md) § "Verifying the Beacon Output".
 ### Parts needed
 - 3D-printed cross-shaped housing (4 quadrants with divider walls)
 - 4× TSOP38238 IR receivers
+- 4× 100 nF ceramic capacitors (power decoupling)
 
 ### Design requirements (Issue #6)
 - **Wall height**: ≥ 25 mm from sensor face to wall top.
@@ -102,7 +118,7 @@ See [PROGRAMMING.md](PROGRAMMING.md) § "Verifying the Beacon Output".
 ### Assembly
 1. Insert each TSOP38238 into its quadrant (Top, Bottom, Left, Right).
 2. Route the 3-pin wires (VCC, GND, OUT) back through the housing.
-3. Add a 100 nF ceramic capacitor across VCC–GND of each sensor (close to the sensor) for power decoupling. The TSOP38238 datasheet recommends this.
+3. **Add a 100 nF ceramic capacitor across VCC–GND of each sensor**, as close to the sensor pins as possible. The TSOP38238 datasheet requires this for stable operation. Solder them directly to the sensor leads or on a small breakout near each sensor.
 4. Mount the cross on the fan grille using zip ties, glue, or a clip bracket.
 
 ---
@@ -138,9 +154,23 @@ See [PROGRAMMING.md](PROGRAMMING.md) § "Verifying the Beacon Output".
 | Sensor Left OUT | TSOP38238 | ESP32 GPIO 25 |
 | Sensor Right OUT | TSOP38238 | ESP32 GPIO 26 |
 
-> **Note:** The ESP32 is a 3.3 V microcontroller. The TSOP38238 runs fine at
-> 3.3 V (rated 2.5–5.5 V). MG996R servos expect 5 V signal; most work
-> reliably with 3.3 V logic, but add a level shifter if you get jitter.
+### Level Shifter (Recommended)
+The ESP32 is a 3.3 V microcontroller.  MG996R servos expect 5 V logic signals.
+While most MG996R servos tolerate 3.3 V, some units exhibit jitter or reduced
+holding torque at the lower voltage.  For reliable operation, place a
+bi-directional 3.3 V ↔ 5 V level shifter on the two servo signal lines:
+
+```
+ESP32 GPIO 18 ──→ Level Shifter LV1 ──→ HV1 ──→ Pan servo signal
+ESP32 GPIO 19 ──→ Level Shifter LV2 ──→ HV2 ──→ Tilt servo signal
+Level Shifter LV  ──→ 3.3 V (ESP32 3V3 pin)
+Level Shifter HV  ──→ 5 V (power bus)
+Level Shifter GND ──→ GND (common)
+```
+
+> **Note:** The TSOP38238 runs fine at 3.3 V (rated 2.5–5.5 V) and outputs
+> a 3.3 V logic signal, which the ESP32 reads directly.  No level shifting
+> is needed for the sensor lines.
 
 ### Cable Management (Issue #4 + Issue #7)
 - Route all cables (sensor wires, servo wires, fan AC cord) through the **center hole of the lazy susan**.
@@ -173,6 +203,7 @@ See [PROGRAMMING.md](PROGRAMMING.md) § "Verifying the Beacon Output".
 | `TRACK_PAN_SPEED_SLOW` | 0.30 | Fine approach speed. Lower = smoother but slower convergence. |
 | `TILT_HOLDOFF_MS` | 100 | Increase if tilt oscillates; decrease for faster vertical response. |
 | `SIGNAL_LOSS_SEARCH_MS` | 3000 | Time before sweep starts. Shorter = more aggressive search. |
+| `SIGNAL_PRESENT_HOLDOFF_MS` | 500 | Hysteresis window. Higher = more tolerant of dropouts, but slower to react to real signal loss. |
 
 ---
 
@@ -184,14 +215,19 @@ See [PROGRAMMING.md](PROGRAMMING.md) § "Verifying the Beacon Output".
 4. Raise/lower the beacon — the fan should tilt to follow.
 5. Walk behind a wall or turn off the beacon. After 3 s the fan should enter `SEARCH` (slow sweep). After 15 s it should `PARK` at home.
 6. Return to line-of-sight — the fan should immediately resume tracking.
+7. Watch the serial monitor for `[Transition]` messages confirming clean state changes.
 
 ### Common Issues
 
 | Symptom | Likely Cause | Fix |
 |---------|-------------|-----|
 | Fan oscillates rapidly left-right | Backlash + no dead band | Increase `PAN_MIN_SPEED`; verify gear mesh |
-| Fan points wrong direction | LEFT/RIGHT sensor wires swapped | Swap D4 ↔ D5 (or swap in `config.h`) |
+| Fan points wrong direction | LEFT/RIGHT sensor wires swapped | Swap GPIO 25 ↔ GPIO 26 (or swap in `config.h`) |
 | Tilt jitters | Rate limit too fast | Increase `TILT_HOLDOFF_MS` to 200 |
 | Works close but not across room | Beacon range too short | Verify TSAL6200 LEDs, check resistor values, extend blinder walls |
 | False triggers in sunlit room | Ambient IR overwhelming AGC | Close blinds, extend blinder walls to 35 mm, reduce `SENSOR_FILTER_THRESHOLD` |
 | Sweeps forever (never locks on) | Beacon dead or out of range | Check beacon battery voltage (should be >3.2 V); test with phone camera |
+| Servo jitters or doesn't hold | 3.3 V logic on 5 V servo | Add the recommended 3.3 V→5 V level shifter on servo signal lines |
+| ESP32 resets unexpectedly | Watchdog timeout (loop stall) | Check serial output for WDT messages; look for I²C hangs or library deadlocks |
+| Fan over-rotates past cable limit | Dead-reckoning drift | Re-calibrate `PAN_DEG_PER_SEC`; consider adding a home-position limit switch |
+| Brief dropouts cause search mode | Holdoff too short | Increase `SIGNAL_PRESENT_HOLDOFF_MS` (default 500 ms) |
