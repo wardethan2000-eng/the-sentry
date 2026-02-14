@@ -1,67 +1,57 @@
 /**
- * @file tilt_controller.cpp
- * @brief Standard servo tilt control with range clamping and rate limiting.
+ * @file tilt_controller.h
+ * @brief Standard 180° servo wrapper for the tilt (vertical) axis.
  *
- * Fix: currentAngle_ is int16_t throughout, eliminating signed/unsigned
- *      edge cases when nudging near the lower bound.
+ * Wraps an MG996R standard servo with:
+ *   - Clamped angle range (TILT_MIN_DEG … TILT_MAX_DEG)
+ *   - Incremental nudge with rate limiting (Issue #8)
+ *   - Park-to-home convenience method
+ *
+ * Fix: currentAngle_ is now int16_t to avoid subtle signed/unsigned
+ *      issues when nudging near the lower bound.
  */
 
-#include "tilt_controller.h"
-#include "config.h"
-#include <Arduino.h>
+#ifndef TILT_CONTROLLER_H
+#define TILT_CONTROLLER_H
 
-// ===================================================================
-// Public API
-// ===================================================================
+#include <ESP32Servo.h>
+#include <stdint.h>
 
-void TiltController::init() {
-    servo_.attach(PIN_TILT_SERVO);
-    currentAngle_ = TILT_HOME_DEG;
-    servo_.write(currentAngle_);
-    lastStepMs_ = millis();
-}
+class TiltController {
+public:
+    /** @brief Attach servo and move to TILT_HOME_DEG. */
+    void init();
 
-void TiltController::setAngle(int16_t degrees) {
-    // Clamp to allowed range.
-    if (degrees < static_cast<int16_t>(TILT_MIN_DEG)) degrees = TILT_MIN_DEG;
-    if (degrees > static_cast<int16_t>(TILT_MAX_DEG)) degrees = TILT_MAX_DEG;
+    /**
+     * @brief Set absolute tilt angle.
+     * @param degrees  Target angle, clamped to [TILT_MIN_DEG, TILT_MAX_DEG].
+     */
+    void setAngle(int16_t degrees);
 
-    currentAngle_ = degrees;
-    servo_.write(static_cast<int>(currentAngle_));
-}
+    /**
+     * @brief Incremental adjustment, respecting rate limit.
+     *
+     * Moves the tilt by @p delta degrees (positive = up, negative = down),
+     * but only if at least TILT_HOLDOFF_MS have elapsed since the last step.
+     *
+     * @param delta  Signed step in degrees.  Magnitude is clamped to TILT_STEP_DEG.
+     * @return true if the step was applied, false if rate-limited (too soon).
+     */
+    bool nudge(int8_t delta);
 
-bool TiltController::nudge(int8_t delta) {
-    unsigned long now = millis();
+    /** @brief Return current tilt angle (degrees). */
+    int16_t getAngle() const;
 
-    // Rate limiting (Issue #8): reject if too soon since last step.
-    if ((now - lastStepMs_) < TILT_HOLDOFF_MS) {
-        return false;
-    }
+    /** @brief Move to TILT_HOME_DEG. */
+    void parkHome();
 
-    // Clamp step magnitude.
-    if (delta > static_cast<int8_t>(TILT_STEP_DEG))  delta =  static_cast<int8_t>(TILT_STEP_DEG);
-    if (delta < -static_cast<int8_t>(TILT_STEP_DEG)) delta = -static_cast<int8_t>(TILT_STEP_DEG);
+    /** @brief Move to TILT_SCAN_DEG (used during SEARCHING state). */
+    void goScanPosition();
 
-    // Compute new angle with bounds check.
-    int16_t newAngle = currentAngle_ + delta;
-    if (newAngle < static_cast<int16_t>(TILT_MIN_DEG)) newAngle = TILT_MIN_DEG;
-    if (newAngle > static_cast<int16_t>(TILT_MAX_DEG)) newAngle = TILT_MAX_DEG;
+private:
+    Servo servo_;
+    int16_t currentAngle_ = 0;
+    unsigned long lastStepMs_ = 0;   ///< millis() of last nudge application
+};
 
-    currentAngle_ = newAngle;
-    servo_.write(static_cast<int>(currentAngle_));
-    lastStepMs_ = now;
-    return true;
-}
-
-int16_t TiltController::getAngle() const {
-    return currentAngle_;
-}
-
-void TiltController::parkHome() {
-    setAngle(TILT_HOME_DEG);
-}
-
-void TiltController::goScanPosition() {
-    setAngle(TILT_SCAN_DEG);
-}
-
+#endif // TILT_CONTROLLER_H
