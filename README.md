@@ -61,6 +61,7 @@ $73–$85 for all electronics (excluding filament, fasteners, wire, solder).
 - [Build Guide](docs/BUILD_GUIDE.md) — step-by-step assembly & wiring
 - [Bill of Materials](docs/BOM.md) — corrected component list with issue fixes
 - [Programming Guide](docs/PROGRAMMING.md) — ATtiny85 ISP setup & PlatformIO usage
+- [Design Notes](docs/DESIGN_NOTES.md) — next version: thermal sensing, picking one person, choosing the fan
 
 ## License
 This project is open-source hardware and software. See individual files for details.
